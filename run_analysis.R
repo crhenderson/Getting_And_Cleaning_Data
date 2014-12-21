@@ -48,7 +48,7 @@ usePackage <- function(p) {
     #Add Subject
     data <- cbind(ReadTable(file=lookups[3],set=dataset,col_names="subject"),data)
     #Make Subject and Activity factors
-    data$subject <- factor(data$subject)
+    data$subject <- factor(data$subject, levels = 1:30)
     #Use labels to show actual activity names
     data$activity <- factor(data$activity, labels = activitylabels$activity)
     data
@@ -75,28 +75,38 @@ usePackage <- function(p) {
   
   # Create second tidy of means
   SecondDataSet <- function(){
-    #create tbl_df of tidydataset1.  This is a function of dplyr
+    #make sure packages are installed and load them
     usePackage("dplyr")
     usePackage("tidyr")
+    #create tbl_df of tidydataset1.  This is a function of dplyr
     data <- tbl_df(MergeData())
     print("Calculating means...")
     data <- arrange(data,subject,activity)%>%
       group_by(subject, activity)%>%
       summarise_each(funs(mean))%>%
       arrange(subject,activity)
+    #clean up variable names
     col.names <- colnames(data)
-    col.names[!(col.names %in% c('subject','activity'))] <- paste('Mean',col.names[!(col.names %in% c('subject','activity'))],sep="")
+    col.names <- gsub("BodyBody","Body",col.names,fixed=T)
+    col.names <- gsub("tBody","TimeBody",col.names,fixed=T)
+    col.names <- gsub("tGravity","TimeGravity",col.names,fixed=T)
+    col.names <- gsub("fBody","FrequencyBody",col.names,fixed=T)
+    col.names <- gsub("fGravity","FrequencyGravity",col.names,fixed=T)
+    col.names <- gsub("Acc","Accelerometor",col.names,fixed=T)
+    col.names <- gsub("Gyro","Gyroscope",col.names,fixed=T)
+    col.names <- gsub("Mag","Magnitude",col.names,fixed=T)
+    col.names[!(col.names %in% c('subject','activity'))] <- paste('mean',col.names[!(col.names %in% c('subject','activity'))],sep="")
     colnames(data)<-col.names
     data
   }
   
-  #Execute. Create tidydata.txt
+  #Create Execute function. Create tidydata.txt and write the table to the working directory.
   Execute <- function(){
     data <- SecondDataSet()
     print("Writing tidydata.txt to working directory...")
     write.table(data,"tidydata.txt",row.names=F)
     print("Complete.")
   }
-  
+ 
+#Run the functions above and supress warning messages.
 suppressWarnings(Execute())
-  
